@@ -43,7 +43,7 @@ class HashTbl {
 		HashTbl ( void );
 	
 		//! @brief Hash Table Destructor.
-		virtual ~HashTbl ();
+		//virtual ~HashTbl ();
 	
 		/** @brief Inserts information 'data_item_' related to 'key_', onto table.
 		 *	@returns True if insertion was successful. False if 'key_' already existed on table. In this case we overwrite previous data with new.
@@ -76,8 +76,10 @@ class HashTbl {
 
 		unsigned int m_size;	//!< Hash table current size.
 		unsigned int m_count;	//!< Number of elements currently stored in the table.
+
 		//!< The table: vector of lists of Entry.
 		std::vector< std::forward_list< Entry > > m_data_table;
+		
 		//! Hash table's default size: 13 table entries.
 		static const short DEFAULT_SIZE = 13;
 	
@@ -123,10 +125,9 @@ template < class KeyType, class DataType, class KeyHash, class KeyEqual >
 /*Constructor{{{*/
 HashTbl<KeyType, DataType, KeyHash, KeyEqual>::HashTbl( size_t tbl_size_ )
 {
-	tbl_size_ = next_prime( tbl_size_ );
-	m_data_table = new std::forward_list<Entry>[tbl_size_];
+	m_size = next_prime( tbl_size_ );
+	m_data_table.resize( m_size );
 
-	m_size = tbl_size_;
 	m_count = 0;
 }
 /*}}}*/
@@ -135,20 +136,20 @@ template < class KeyType, class DataType, class KeyHash, class KeyEqual >
 /*Default Constructor{{{*/
 HashTbl<KeyType, DataType, KeyHash, KeyEqual>::HashTbl( void )
 {
-	m_data_table = new std::forward_list<Entry>[DEFAULT_SIZE];
-
 	m_size = DEFAULT_SIZE;
+	m_data_table.resize( DEFAULT_SIZE );
+
 	m_count = 0;
 }
 /*}}}*/
 
-template < class KeyType, class DataType, class KeyHash, class KeyEqual >
+//template < class KeyType, class DataType, class KeyHash, class KeyEqual >
 /*Destructor{{{*/
-HashTbl<KeyType, DataType, KeyHash, KeyEqual>::~HashTbl()
-{
-	for( auto &each_list : m_data_table ) delete[] each_list;
-	delete[] m_data_table;
-}
+//HashTbl<KeyType, DataType, KeyHash, KeyEqual>::~HashTbl()
+//{
+//	for( auto &each_list : m_data_table ) delete[] each_list;
+//	delete[] m_data_table;
+//}
 /*}}}*/
 
 template < class KeyType, class DataType, class KeyHash, class KeyEqual >
@@ -180,12 +181,17 @@ bool HashTbl<KeyType, DataType,
 			 KeyHash, KeyEqual>::remove ( const KeyType & key_ )
 {
 	auto & whichList = m_data_table[ hashFunc( key_ ) % m_size ];
-	auto itr = find( begin( whichList ), end( whichList ), key_ );
-	if( itr == end( whichList ) ) return false;
-	whichList.erase( itr );
-	--m_count;
-	return true;
+	auto prev = whichList.before_begin();
+	for( auto it( whichList.begin() ); it != whichList.end(); it++ ){
+		if( true == equalFunc( (*it).m_key, key_ ) ){
+			whichList.erase_after( prev );
+			--m_count;
+			return true;
+		}
+		prev++;
+	}
 
+	return false;
 }
 /*}}}*/
 
