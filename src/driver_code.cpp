@@ -2,6 +2,8 @@
 
 #include <fstream>
 
+struct Account{
+};
 int main( int argc, char **argv ) {
 	std::cout << "\e[32;4m>>> Bank Account Management Implemenation\e[0m\n";
 	
