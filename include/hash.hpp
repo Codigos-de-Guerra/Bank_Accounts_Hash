@@ -6,8 +6,8 @@
  * @title Hash Implementation
  */
 
-#ifndef _HASH_
-#define _HASH_
+#ifndef _HASH_BANK_
+#define _HASH_BANK_
 
 #include <iostream>
 #include <vector>
@@ -34,11 +34,14 @@ class HashTbl {
 	};
 
 	public:
-		using Entry = HashEntry< KeyType, DataType >; //!< Alias
+		using Entry = HashEntry/*< KeyType, DataType >*/; //!< Alias
 
-		//! @brief Hash Table Constructor.
-		HashTbl ( size_t tbl_size_ = DEFAULT_SIZE );
-		
+		//! @brief Hash Table Constructor with passed size.
+		HashTbl ( size_t tbl_size_ );
+
+		//! @brief Hash Table Default Constructor.
+		HashTbl ( void );
+	
 		//! @brief Hash Table Destructor.
 		virtual ~HashTbl ();
 	
@@ -70,22 +73,21 @@ class HashTbl {
 		void print( void ) const;
 
 	private:
-		void rehash();			//!< Change Hash table size if load factor >1.0
-		size_t next_prime( size_t tbl_size ); //Finds the smaller prime number greater than tbl_size.
 
 		unsigned int m_size;	//!< Hash table current size.
 		unsigned int m_count;	//!< Number of elements currently stored in the table.
 		//!< The table: vector of lists of Entry.
 		std::vector< std::forward_list< Entry > > m_data_table;
-		//! Hash table's default size: 11 table entries.
-		static const short DEFAULT_SIZE = 11;
+		//! Hash table's default size: 13 table entries.
+		static const short DEFAULT_SIZE = 13;
 	
 		// Auxiliary functions
 		KeyHash hashFunc;	// Instantiate the "functor" for primary hash.
 		KeyEqual equalFunc;	// Instantiate the "functor" for the equal to test.
 
-		//! @brief Resizes the Hash Table.
-		void rehash(){
+		//! @brief Resizes the Hash Table if  load factor > 1.
+		void rehash( void ){
+		/*{{{*/
 			std::vector< std::forward_list< Entry > > old_data_table = m_data_table;
 			// New table size now must be at least 2 times bigger than previous.
 			m_size = next_prime( 2 * m_size );
@@ -93,7 +95,7 @@ class HashTbl {
 			m_count = 0;
 
 			for( auto & this_data_table : m_data_table ){
-				this_data_table.clear( );
+				this_data_table.clear();
 			}
 
 			// Copy table data
@@ -103,12 +105,151 @@ class HashTbl {
 				}
 			}
 		}
+		/*}}}*/
 
 		//! @brief Auxiliary function for finding a valid size for table.
+		// First smaller number greater than tbl_size
 		size_t next_prime( size_t tbl_size ){
-			for( int i = 2; i < sqrt(tbl_size); i++){
+		/*{{{*/
+			for( int i = 2; i < sqrt( tbl_size ); i++){
 				if( tbl_size % i == 0 ) return next_prime( tbl_size + 1 );
 			}
 			return tbl_size;
 		}
+		/*}}}*/
 };
+
+template < class KeyType, class DataType, class KeyHash, class KeyEqual >
+/*Constructor{{{*/
+HashTbl<KeyType, DataType, KeyHash, KeyEqual>::HashTbl( size_t tbl_size_ )
+{
+	tbl_size_ = next_prime( tbl_size_ );
+	m_data_table = new std::forward_list<Entry>[tbl_size_];
+
+	m_size = tbl_size_;
+	m_count = 0;
+}
+/*}}}*/
+
+template < class KeyType, class DataType, class KeyHash, class KeyEqual >
+/*Default Constructor{{{*/
+HashTbl<KeyType, DataType, KeyHash, KeyEqual>::HashTbl( void )
+{
+	m_data_table = new std::forward_list<Entry>[DEFAULT_SIZE];
+
+	m_size = DEFAULT_SIZE;
+	m_count = 0;
+}
+/*}}}*/
+
+template < class KeyType, class DataType, class KeyHash, class KeyEqual >
+/*Destructor{{{*/
+HashTbl<KeyType, DataType, KeyHash, KeyEqual>::~HashTbl()
+{
+	for( auto &each_list : m_data_table ) delete[] each_list;
+	delete[] m_data_table;
+}
+/*}}}*/
+
+template < class KeyType, class DataType, class KeyHash, class KeyEqual >
+/*insert method{{{*/
+bool HashTbl<KeyType, DataType,
+			 KeyHash, KeyEqual>::insert ( const KeyType & key_,
+										  const DataType & data_item_ )
+{
+	auto & whichList = m_data_table[ hashFunc( key_ ) % m_size ];
+	Entry new_entry ( key_, data_item_ ); //Create a new entry.
+
+	for( auto it( whichList.begin() ); it != whichList.end(); it++ ){
+		if( true == equalFunc( (*it).m_key , new_entry.m_key ) ){
+			(*it).m_data = new_entry.m_data;
+			return false;
+		}
+	}
+
+	whichList.push_front( new_entry );
+	if( ++m_count > m_size ) rehash( );
+	
+	return true;
+}
+/*}}}*/
+
+template < class KeyType, class DataType, class KeyHash, class KeyEqual >
+/*remove method{{{*/
+bool HashTbl<KeyType, DataType,
+			 KeyHash, KeyEqual>::remove ( const KeyType & key_ )
+{
+	auto & whichList = m_data_table[ hashFunc( key_ ) % m_size ];
+	auto itr = find( begin( whichList ), end( whichList ), key_ );
+	if( itr == end( whichList ) ) return false;
+	whichList.erase( itr );
+	--m_count;
+	return true;
+
+}
+/*}}}*/
+
+template < class KeyType, class DataType, class KeyHash, class KeyEqual >
+/*retrieve method{{{*/
+bool HashTbl<KeyType, DataType,
+			 KeyHash, KeyEqual>::retrieve ( const KeyType & key_,
+											DataType & d_ ) const
+{
+	auto & whichList = m_data_table[ hashFunc( key_ ) % m_size ];	
+	auto itr = find( whichList.begin(), whichList.end(), key_ );
+	if( itr == whichList.end() ) return false;
+
+	d_ = (*itr).m_data;
+	return true;
+}
+/*}}}*/
+	
+template < class KeyType, class DataType, class KeyHash, class KeyEqual >
+/*clear method{{{*/
+void HashTbl<KeyType, DataType,
+			 KeyHash, KeyEqual>::clear ( void )
+{
+	m_data_table.clear();
+}
+/*}}}*/
+
+template < class KeyType, class DataType, class KeyHash, class KeyEqual >
+/*empty method{{{*/
+bool HashTbl<KeyType, DataType,
+			 KeyHash, KeyEqual>::empty ( void ) const
+{
+	return m_count == 0;
+}
+/*}}}*/
+
+template < class KeyType, class DataType, class KeyHash, class KeyEqual >
+/*count method{{{*/
+unsigned long int HashTbl<KeyType, DataType,
+						  KeyHash, KeyEqual>::count ( void ) const
+{
+	return m_count;
+}
+/*}}}*/
+
+template < class KeyType, class DataType, class KeyHash, class KeyEqual >
+/*print method{{{*/
+void HashTbl<KeyType, DataType,
+			 KeyHash, KeyEqual>::print ( void ) const
+{
+	if( !m_data_table.empty() ){
+		auto eachList = m_data_table.begin();
+		for( ; eachList != m_data_table.end(); eachList++ ){
+		// Loop to check each List inside our vector os Lists.(Hash Table).
+			if( !(*eachList).empty() ){
+				auto itr = (*eachList).begin();
+				for( ; itr != (*eachList).end(); itr++ ){
+					std::cout << ">>> Key: " << (*itr).m_key << " Data: ";
+					std::cout << (*itr).m_data << "\n";
+				}
+			}
+		}
+	}
+}
+/*}}}*/
+
+#endif

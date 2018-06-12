@@ -12,7 +12,7 @@ DATA_PATH = data
 DOCS_PATH = docs
 
 # executable #
-BIN_NAME = bares
+BIN_NAME = bank
 
 # extensions #
 SRC_EXT = cpp
@@ -68,7 +68,7 @@ clean:
 
 # checks the executable and symlinks to the output
 .PHONY: all
-all: project docs
+all: project #docs
 
 .PHONY: project
 project: $(BIN_PATH)/$(BIN_NAME)
