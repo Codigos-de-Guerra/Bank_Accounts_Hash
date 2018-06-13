@@ -16,9 +16,10 @@ struct Account{
 	int account_num_;
 	float balance_;
 
-	Account( std::string nome = "Alfredo" , int b_c = 7, int ag_n = 13, int ac_n = 25, float bal = 100 )
+	Account( std::string name = "John Doe" , int b_c = 0,
+			 int ag_n = 0, int ac_n = 0, float bal = 0 )
 	{
-		client_name_ = nome;
+		client_name_ = name;
 		bank_code_ = b_c;
 		agency_num_ = ag_n;
 		account_num_ = ac_n;
@@ -44,6 +45,7 @@ struct Account{
 	}
 };
 
+//! @brief Functor for 1st Hash Function.
 struct KeyHash {
 
 	std::size_t operator()( const Account::AcctKey& key_ ) const
@@ -59,6 +61,7 @@ struct KeyHash {
 	}
 };
 
+//! @brief Functor for Comparing 'keys'.
 struct KeyEqual {
 
 	bool operator()( const Account::AcctKey & lhs_,
@@ -84,7 +87,7 @@ int main( void ) {
                 {"Edward Ken", 4, 1715, 5, 230.f}
 		};
 
-	HashTbl< Account::AcctKey, Account > contas(15);
+	HashTbl< Account::AcctKey, Account, KeyHash, KeyEqual > contas(15);
 
 	assert( contas.count() == 0 );
 
@@ -101,27 +104,56 @@ int main( void ) {
 
 	std::cout << "\e[32;4m>>> Deleting Connor's Account...\e[0m\n";
 	if( contas.remove( myAccounts[3].get_key() ) ){
-		std::cout << " Removal Sucess!";
+		std::cout << "\e[32;4m>REMOVAL SUCCESS!\e[0m\n";
 	}
 	else {
-		std::cout << " Account not found!";
+		std::cout << "\e[32;4m>ACCOUNT NOT FOUND!\e[0m\n";
 	}
 
 	contas.print();
 	assert( contas.count() == 4 );
 
 	Account acc1;
-	contas.retrieve( myAccounts[3].get_key(),  acc1);
-	assert( myAccounts[3].get_key() ==  acc1.get_key() );
-	assert( myAccounts[3].client_name_ ==  acc1.client_name_ );
-	assert( myAccounts[3].agency_num_ ==  acc1.agency_num_ );
+	contas.retrieve( myAccounts[1].get_key(),  acc1);
+	assert( myAccounts[1].get_key() == acc1.get_key() );
+	assert( myAccounts[1].client_name_ ==  acc1.client_name_ );
+	assert( myAccounts[1].agency_num_ ==  acc1.agency_num_ );
 
-	//myAccounts[2] was removed, retrieve needs to be false
-	assert( contas.retrieve( myAccounts[1].get_key(),  acc1) == false );
+	// If it reaches here, then retrieval was a success.
+
+	//myAccounts[3] was removed, retrieve needs to be false
+	assert( contas.retrieve( myAccounts[3].get_key(),  acc1) == false );
 
 
+	std::cout << "\e[33;4m>>> Testing Rehash efficacy\e[0m\n";
 
+	Account bb[] = {
+		{"Jaime", 1, 16683, 222, 10000000.f},
+		{"Adamastor", 4, 16683, 222, 5831.f},
+		{"Mustafar", 4, 16683, 21322, 111.f},
+		{"Simba", 4, 16683, 21332, 543210.f},
+		{"Joel Santana", 9, 42, 909, 9009.f},
+		{"Zero Criatividade", 1, 2, 3, 12.f},
+		{"Encher Linguiça", 10, 12, 13, 0.f},
+		{"AAAAAAAAAA", 61, 7134, 81, 8121.f}
+	};
 
-	std::cout << "\e[34;4m>>> SUCESS ACHIEVED!!\e[0m\n";
+	// Hash Table with capacity of 2.
+	HashTbl< Account::AcctKey, Account, KeyHash, KeyEqual > tabela(2);
+
+	assert( tabela.count() == 0 );
+
+	for( int i=0; i < 8; i++ ){
+		// Insertions here will require a total of 2 rehashes.
+		// From size 2 -> 5 -> 11.
+		tabela.insert( bb[i].get_key(), bb[i] );
+	}
+	tabela.print();
+
+	assert( tabela.count() == 8 );
+	assert( tabela.size() == 11 );
+
+	std::cout << "\e[36;1m>>> Rehashes were successful\e[0m\n";
+	std::cout << "\e[36;4m>>> SUCCESS ACHIEVED!!\e[0m\n\n";
 	return 0;
 }

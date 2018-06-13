@@ -69,6 +69,9 @@ class HashTbl {
 		//! @return Current number of elements stored in table.
 		unsigned long int count ( void ) const;
 
+		//! @return Current table size.
+		unsigned long int size ( void ) const;
+
 		//! @brief Prints onto terminal the Hash Table.
 		void print( void ) const;
 
@@ -89,7 +92,7 @@ class HashTbl {
 
 		//! @brief Resizes the Hash Table if  load factor > 1.
 		void rehash( void ){
-		/*{{{*/
+		/*rehash private method{{{*/
 			std::vector< std::forward_list< Entry > > old_data_table = m_data_table;
 			// New table size now must be at least 2 times bigger than previous.
 			m_size = next_prime( 2 * m_size );
@@ -110,10 +113,10 @@ class HashTbl {
 		/*}}}*/
 
 		//! @brief Auxiliary function for finding a valid size for table.
-		// First smaller number greater than tbl_size
 		size_t next_prime( size_t tbl_size ){
-		/*{{{*/
-			for( int i = 2; i < sqrt( tbl_size ); i++){
+		//First smaller prime number greater than tbl_size.
+		/*next_prime private method{{{*/
+			for( int i = 2; i <= sqrt( tbl_size ); i++){
 				if( tbl_size % i == 0 ) return next_prime( tbl_size + 1 );
 			}
 			return tbl_size;
@@ -181,7 +184,7 @@ bool HashTbl<KeyType, DataType,
 			 KeyHash, KeyEqual>::remove ( const KeyType & key_ )
 {
 	auto & whichList = m_data_table[ hashFunc( key_ ) % m_size ];
-	auto prev = whichList.before_begin();
+	auto prev = whichList.before_begin();// Auxiliary Iterator for deleting.
 	for( auto it( whichList.begin() ); it != whichList.end(); it++ ){
 		if( true == equalFunc( (*it).m_key, key_ ) ){
 			whichList.erase_after( prev );
@@ -202,11 +205,15 @@ bool HashTbl<KeyType, DataType,
 											DataType & d_ ) const
 {
 	auto & whichList = m_data_table[ hashFunc( key_ ) % m_size ];	
-	auto itr = find( whichList.begin(), whichList.end(), key_ );
-	if( itr == whichList.end() ) return false;
+	auto itr = whichList.begin();
+	for( ; itr != whichList.end(); itr++ ){
+		if( true == equalFunc( (*itr).m_key, key_ ) ){
+			d_ = (*itr).m_data;
+			return true;
+		}
+	}
 
-	d_ = (*itr).m_data;
-	return true;
+	return false;
 }
 /*}}}*/
 	
@@ -238,6 +245,15 @@ unsigned long int HashTbl<KeyType, DataType,
 /*}}}*/
 
 template < class KeyType, class DataType, class KeyHash, class KeyEqual >
+/*size method{{{*/
+unsigned long int HashTbl<KeyType, DataType,
+						  KeyHash, KeyEqual>::size ( void ) const
+{
+	return m_size;
+}
+/*}}}*/
+
+template < class KeyType, class DataType, class KeyHash, class KeyEqual >
 /*print method{{{*/
 void HashTbl<KeyType, DataType,
 			 KeyHash, KeyEqual>::print ( void ) const
@@ -249,7 +265,6 @@ void HashTbl<KeyType, DataType,
 			if( !(*eachList).empty() ){
 				auto itr = (*eachList).begin();
 				for( ; itr != (*eachList).end(); itr++ ){
-					std::cout << ">>> Key: " << (*itr).m_key << " Data: ";
 					std::cout << (*itr).m_data << "\n";
 				}
 			}
