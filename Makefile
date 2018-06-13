@@ -68,7 +68,7 @@ clean:
 
 # checks the executable and symlinks to the output
 .PHONY: all
-all: project #docs
+all: project docs
 
 .PHONY: project
 project: $(BIN_PATH)/$(BIN_NAME)

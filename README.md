@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This programming project implements a hash for Bank Account Management. Through information received via client, we shall be able to manage each and every account, supporting basic operations such as *inserting, consulting and removing*.
+This programming project implements a hash for Bank Account Management. Through information received via client, we shall be able to manage each and every account, supporting basic operations such as *inserting, consulting and removing*. Through Hashing, we will associate each account info to a created key. Since it is possibly to have the same account number for different agencies, we can't work with a key that receives only these 2 informations. For pratical use, we are considering a key to be a group of the *client's name, bank code, agency number* and *bank accounts number* data.
 
 ## How to compile
 
@@ -33,18 +33,14 @@ $ make clean
 Now, we show how to run the program. 
 ```bash
 # To execute program:
-$ ./bank <Version>
+$ ./bank
 ```
-- `<Version>`: Represents which Version is supossed to be utilized for viewing accounts.
-
 ### Example
 
-Let's say you wish an simple test for Account Management, differing each account by only it's number, then should execute as:
+It really is that simple. Since we aren't testing with actual bank accounts data or similars, we just need to check if it really works, and if is ready for pratical uses. Therefore, a simple execution is used.
 ```bash
-$ ./bank 1
+$ ./bank
 ```
-
-In this example 
 ## GitHub Repository:
 
 *https://github.com/Codigos-de-Guerra/Bank_Accounts_Hash*
